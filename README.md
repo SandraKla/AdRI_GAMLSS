@@ -9,7 +9,7 @@
 
 **Shiny App for calculating Age-dependent Reference Intervals!**
 
-This Shiny App was developed to create **A**ge-**d**ependent **R**eference **I**ntervals (**AdRI**) using [Generalized Additive Model for Location, Scale and Shape (GAMLSS)](https://github.com/SandraKla/AdRI/wiki/Generalized-additive-models-for-location,-scale-and-shape-(GAMLSS)).
+This Shiny App was developed to create **A**ge-**d**ependent **R**eference **I**ntervals (**AdRI**) using [Generalized Additive Model for Location, Scale and Shape (GAMLSS)](https://github.com/SandraKla/AdRI_GAMLSS/wiki).
 
 *** **Warning!** This Shiny App has not been enough validated for the basis of a medical diagnosis! There is no warranty for the app and/or the reference intervals! ***
 
@@ -44,4 +44,4 @@ And then start the app with the following code:
 runApp("app.R")
 ```
 
-All required packages are downloaded when starting this app or imported if they already exist. For more information about the required packages use the [Wiki](https://github.com/SandraKla/AdRI/wiki/Versions).
+All required packages are downloaded when starting this app or imported if they already exist. For more information about the required packages use the [Wiki](https://github.com/SandraKla/AdRI_GAMLSS/wiki).
