@@ -102,7 +102,7 @@ ui <- fluidPage(
         tabPanel("Overview", icon = icon("home"),
                  
           p(strong("Shiny App for calculating Age-dependent Reference Intervals!"), br(), br(),
-          "This Shiny App was developed to create Age-dependent Reference Intervals (AdRI_GAMLSS) using Generalized Additive Model for Location, Scale and Shape (GAMLSS).", 
+          "This Shiny App was developed to create Age-dependent Reference Intervals (AdRI_GAMLSS) using Generalized Additive Models for Location, Scale and Shape (GAMLSS).", 
           br(), "For further information visit our", 
           a("Wiki", href="https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"), 
           plotlyOutput("scatterplot_plotly", height="700px")),
