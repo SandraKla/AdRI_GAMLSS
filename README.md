@@ -45,3 +45,12 @@ runApp("app.R")
 ```
 
 All required packages are downloaded when starting this app or imported if they already exist. For more information about the required packages use the [Wiki](https://github.com/SandraKla/AdRI_GAMLSS/wiki).
+
+## Contact
+
+You are welcome to:
+- Submit suggestions and Bugs at: https://github.com/SandraKla/AdRI_GAMLSS/issues
+- Make a pull request on: https://github.com/SandraKla/AdRI_GAMLSS/pulls
+- Write an Email with any questions and problems to: s.klawitter@ostfalia.de
+
+Link to the publication: [A visualization tool for continuous reference intervals based on GAMLSS](https://www.degruyter.com/document/doi/10.1515/labmed-2023-0033/html)
