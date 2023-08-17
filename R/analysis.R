@@ -106,3 +106,132 @@ select_data_days <- function(data_, age_begin = 0, age_end, sex = "t"){
   if(sex == "f"){data_analyte <- subset(data_analyte, sex == "F", select = c(patient, sex, age, age_days, value, code, name))}
   
   return(data_analyte)}
+
+####################################### Statistics ################################################
+
+#' Calculate R^2 
+#' 
+#' @param y Datapoints 
+#' @param y_predict Predicted values
+rsq <- function(y,y_predict){
+  
+  ss_res <- sum((y-y_predict)^2)
+  ss_tot <- sum((y-mean(y))^2)
+  r_sq <- 1 - (ss_res/ss_tot)
+  return(r_sq)
+}
+
+
+#' Calculate Mean absolute error 
+#' 
+#' @param y Datapoints 
+#' @param y_predict Predicted values
+mae <- function(y, y_predict){
+  1/length(y)* sum(abs(y - y_predict))}
+
+
+#' Calculate Mean squared error 
+#' 
+#' @param y Datapoints 
+#' @param y_predict Predicted values
+mse <- function(y, y_predict){
+  1/length(y) * sum((y - y_predict)^2)}
+
+
+#' Calculate Root mean squared error 
+#' 
+#' @param y Datapoints 
+#' @param y_predict Predicted values
+rmse <- function(y, y_predict){
+  sqrt(1/length(y) * sum((y - y_predict)^2))}
+
+
+#' Function for data preparation
+#' 
+#' @param x Expects a vector
+#' @param no.zero
+numeric.data <- function(x, no.zero = FALSE){
+  xx <- as.numeric(as.character(x))
+  xx <- xx[!is.na(xx)]
+  ifelse(no.zero, xx <- xx[xx > 0], xx <- xx[xx >= 0])
+  return(xx)
+}
+
+
+#' Returns the Bowley skewness of a range between alpha and 1-alpha
+bowley <- function(x, alpha = 0.25){
+  q <- quantile(x, c(alpha, 0.5, 1 - alpha))
+  return ((q[1] - 2 * q[2] + q[3]) / (q[3] - q[1]))
+}
+
+
+#' Compares the Bowley skewness for x and log(x)
+#' returns TRUE, if a lognormal distribution should be assumed
+def.distribution <- function(x, cutoff = 0.05, alpha = 0.25, digits = 3, plot.it = TRUE, add.tx = "distribution", setvalues = NULL,
+                             main = ""){
+  
+  xx <- x[!is.na(x)]
+  
+  if(!is.numeric(xx)){stop("(def.distribution) x must be numeric.")}
+  if(length(xx) < 2){stop("(def.distribution) x must be a vector of at least 2 numeric values.")}
+  if(min(xx) <= 0){stop("(def.distribution) negative values not allowed.")}
+  
+  s <- rep(NA, 2)
+  s[1] <- bowley(xx, alpha)
+  s[2] <- bowley(log(xx), alpha)
+  if(s[1] < 0){lognorm <- FALSE} else {lognorm <- (s[1] - s[2]) >= cutoff}
+  names(s) <- c("normal", "lognormal")
+  if(!is.na(digits)){s <- round(s, digits)}
+  
+  if (plot.it){
+    d <- density(x)
+    hist(x, freq = FALSE, ylim = c(0, max(d$y) * 1.2), xlab = "x", ylab = "Density", 
+         main = paste(ifelse(lognorm, paste("Lognormal-", add.tx), paste("Normal-", add.tx)), main))
+    lines(d$x, d$y)
+    if (!is.null(setvalues)){
+      abline(v = setvalues, lty = 2)}
+  }
+  
+  return(list("lognormal" = lognorm, "BowleySkewness" = s))
+}
+
+
+#' Round numeric values from a dataframe
+#' 
+#' @param x Expects a dataframe
+#' @param digits Digits to round
+round_df <- function(x, digits) {
+  numeric_columns <- sapply(x, mode) == 'numeric'
+  x[numeric_columns] <-  round(x[numeric_columns], digits)
+  return(x)
+}
+
+
+#' Round numeric values from a dataframe
+adjust.digits <- function(x){
+  digits <- 2 - floor(log10(x))
+  if(digits < 1){digits <- 1}
+  return(digits)
+}
+
+
+#' zlog-Standardization of a single quantitative laboratory result x
+#' 
+#' @param x Expects a dataframe
+#' @param lower.limt Lower Reference Limit
+#' @param upper.limit Upper Reference Limit
+zlog <- function(x, lower.limit, upper.limit){
+  if (x <= 0 | lower.limit <= 0 | upper.limit <= 0){
+    stop("(zlog) All parameters must be greater than 0")
+  }
+  if (upper.limit <= lower.limit){
+    stop("(zlog) upper.limit must be greater than lower.limit")
+  }
+  
+  logl <- log(lower.limit)
+  logu <- log(upper.limit)
+  mu.log <- (logl + logu) / 2
+  sigma.log <- (logu - logl) / 3.919928
+  
+  return((log(x) - mu.log) / sigma.log)
+}

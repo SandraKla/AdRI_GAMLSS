@@ -5,7 +5,6 @@
 ####################################### Scripts ###################################################
 
 source("R/analysis.R")
-source("R/reflim.R")
 source("R/gamlss.R")
 
 ####################################### Libraries #################################################
@@ -50,6 +49,11 @@ if("rpart.plot" %in% rownames(installed.packages())){
     install.packages("rpart.plot")
     library(rpart.plot)}
 
+if("shinydashboard" %in% rownames(installed.packages())){
+  library(shinydashboard)} else{
+    install.packages("shinydashboard")
+    library(shinydashboard)}
+
 if("zoo" %in% rownames(installed.packages())){
   library(zoo)} else{
     install.packages("zoo")
@@ -57,204 +61,395 @@ if("zoo" %in% rownames(installed.packages())){
 
 ####################################### USER INTERFACE ############################################
 
-ui <- fluidPage(
- 
-  theme = "style.css",  
-  navbarPage("Age-dependent Reference Intervals (AdRI_GAMLSS)", 
-
-  ################################### Overview ##################################################
+ui <- dashboardPage(
+  dashboardHeader(title = "AdRI_GAMLSS", titleWidth = 175),
+  dashboardSidebar(width = 175,
+                   sidebarMenu(
+                     menuItem("Analysis", tabName = "analysis", icon = icon("database")),
+                     menuItem("GAMLSS", tabName = "gamlss", icon = icon("chart-line"), startExpanded = FALSE,
+                       menuSubItem("GAMLSS and LMS", tabName = "gamlsslms", icon = icon("chart-line")),
+                       menuSubItem("Comparison", tabName = "comparison", icon = icon("balance-scale")),
+                       menuSubItem("Percentiles", tabName = "percentiles", icon = icon("table")))
+                   )),
+  dashboardBody(
     
-  tabPanel("Analysis", icon = icon("database"),
-    sidebarLayout( 
-    ### Sidebar - Analysis ###
-      sidebarPanel(width = 3,
-                   
-        helpText("Data Upload:"),
-                              
-        selectInput("dataset", "Select preinstalled dataset:", choice = list.files(pattern = c(".csv"), recursive = TRUE)),
-        
-        uiOutput("dataset_file"),
-        
-        actionButton('reset', 'Reset Input', icon = icon("trash")), hr(),
-        
-        helpText("Data Preprocessing:"),
-          
-        radioButtons("days_or_years", "Unit for the Age:", c("year" = "age", "day "= "age_days")),
-          
-        conditionalPanel(condition = "input.days_or_years == 'age'", 
-                         sliderInput("age_end", "Select age-range:", min = 0 , max = 100, value = c(0,18))),
-          
-        conditionalPanel(condition = "input.days_or_years == 'age_days'", 
-                         numericInput("age_input_min", "Select age-range from:", 0, min = 0, max = 100*365)), 
-      
-        conditionalPanel(condition = "input.days_or_years == 'age_days'", 
-                         numericInput("age_input", "to:", 100, min = 1, max = 100*365)),
-          
-        selectInput("sex", "Select the Sex:", choices = list("Male + Female" = "t", "Male" = "m", "Female" = "f")), 
-          
-        textInput("text_unit", "Unit of the Analyte:", value = "Unit"), 
-        
-        checkboxInput("unique", "First Unique values", value = TRUE)),
-      
-    ### MainPanel - Analysis ###              
-    mainPanel(width = 9,
-      tabsetPanel(
-        tabPanel("Overview", icon = icon("home"),
-                 
-          p(strong("Shiny App for calculating Age-dependent Reference Intervals!"), br(), br(),
-          "This Shiny App was developed to create Age-dependent Reference Intervals (AdRI_GAMLSS) using Generalized Additive Models for Location, Scale and Shape (GAMLSS).", 
-          br(), "For further information visit our", 
-          a("Wiki", href="https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"), 
-          plotlyOutput("scatterplot_plotly", height="700px")),
-            
-        tabPanel("Dataset", icon = icon("table"),
-                 
-          DT::dataTableOutput("datatable")),
-            
-        tabPanel("Barplots", icon = icon("chart-bar"),
-                 
-          plotOutput("barplot_sex", height="400px"), 
-          plotOutput("barplot_value", height="400px")),
-            
-        tabPanel("Statistics", icon = icon("calculator"),
-          
-          plotOutput("qqplot", height="400px"),
-          plotOutput("lognorm", height="400px"))
-        )
-    ))),
-  
-    ############################################# GAMLSS ##########################################
-  
-    navbarMenu("GAMLSS", icon = icon("chart-line"),
+    tags$style(
+    HTML("
+          .content-wrapper {
+            overflow-y: scroll !important;
+          }
+          .custom-scrollbox {
+            max-height: 400px; /* Passe die maximale Höhe an */
+            overflow-y: scroll;
+          }
+        ")),
     
-      tabPanel("GAMLSS and LMS", icon = icon("chart-line"),
-        sidebarLayout( 
-          ### Sidebar - GAMLSS ###
-          sidebarPanel(width = 3,
-            
-            actionButton("button_lms", "Start LMS", icon("calculator"), onclick = "$(tab).removeClass('disabled')"), 
-            htmlOutput("buttons_lms"), hr(),
-            selectInput("distribtion_gamlss", "Distribution for GAMLSS:", choices = list( "Log-Normal Distribution" = "LOGNO",
-                                                                                      "Normal Distribution" = "NO",
-                                                                "Box-Cox" = c(#"Box-Cole Green Distribution" = "BCCG", 
-                                                                              "Box-Cole Green Distribution (orginal)" = "BCCGo",
-                                                                              #"Box-Cole Green Exp. Distribution" = "BCPE",
-                                                                              "Box-Cole Green Exp. Distribution (orginal)" = "BCPEo", 
-                                                                              #"Box-Cole Green T-Distribution" = "BCT", 
-                                                                              "Box-Cole Green T-Distribution (orginal)" = "BCTo"))),
-            checkboxInput("checkbox", "Distribution proposed by the LMS", value = FALSE),
-            actionButton("button_gamlss", "Start GAMLSS", icon("calculator"), onclick = "$(tabs).removeClass('disabled')"),
-            htmlOutput("buttons_gamlss")
-          ),
-        
-        ### MainPanel - GAMLSS ###        
-        mainPanel(width = 9, 
+    tabItems(
+    tabItem(tabName = "analysis",
+            fillPage(fluidRow(
+              ### Sidebar - Analysis ###
+              box(
+                title = tagList(shiny::icon("gear"), "Settings"),
+                width = 3,
+                solidHeader = TRUE,
+                status = "primary",
+                
+                helpText("Data Upload:"),
+                
+                selectInput("dataset", "Select preinstalled dataset:", choice = list.files(pattern = c(".csv"), recursive = TRUE)),
+                uiOutput("dataset_file"),
+                actionButton('reset', 'Reset Input', icon = icon("trash")),
+                hr(),
+                
+                helpText("Data Preprocessing:"),
+                
+                radioButtons(
+                  "days_or_years",
+                  "Unit for the age:",
+                  c("year" = "age", "day" = "age_days")),
+                
+                conditionalPanel(
+                  condition = "input.days_or_years == 'age'",
+                  sliderInput(
+                    "age_end",
+                    "Select age-range:",
+                    min = 0 ,
+                    max = 100,
+                    value = c(0, 18))),
+                
+                conditionalPanel(
+                  condition = "input.days_or_years == 'age_days'",
+                  numericInput(
+                    "age_input_min",
+                    "Select age-range from:",
+                    0,
+                    min = 0,
+                    max = 100 * 365)),
+                
+                conditionalPanel(
+                  condition = "input.days_or_years == 'age_days'",
+                  numericInput("age_input", "to:", 100, min = 1, max = 100 * 365)),
+                
+                selectInput("sex", "Select the sex:",
+                  choices = list(
+                    "Male + Female" = "t",
+                    "Male" = "m",
+                    "Female" = "f")),
+                
+                textInput("text_unit", "Unit of the analyte:", value = "Unit"),
+                checkboxInput("unique", "First unique values", value = TRUE)
+              ),
+              
+              ### MainPanel - Analysis ###
+              column(
+                width = 9,
+                tabsetPanel(
+                  tabPanel("Overview", icon = icon("home"),
+                    
+                    p(br(), strong("Shiny App for calculating age-dependent Reference Intervals!"), br(), br(),
+                      "This Shiny App was developed to create age-dependent Reference Intervals using 
+                      Generalized Additive Models for Location, Scale and Shape (GAMLSS).", br(),
+                      "For further information visit our", a("Wiki", href = "https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"),
+                    
+                    plotlyOutput("scatterplot_plotly", height ="700px")
+                  ),
                   
-          tabsetPanel( 
-
-            tabPanel("LMS", icon = icon("chart-line"), value = "nav_lms",
-                     
-              plotOutput("lms", height="700px")),
-            
-            tabPanel("LMS", icon = icon("calculator"), value = "nav_lms",
-                     
-              verbatimTextOutput("lms_text"), 
-              plotOutput("lms_plot"), plotOutput("lms_fitted", height = "500px"), plotOutput("lms_wormplots")),
-            
-            tabPanel("GAMLSS (Splines)", icon = icon("chart-line"), value = "nav_gamlss",
-              
-              plotOutput("gamlss_models_splines", height="700px")), 
-            
-            tabPanel("GAMLSS (Splines)",  icon = icon("calculator"), value = "nav_gamlss", 
-              
-              p("GAMLSS with P-Splines:"), verbatimTextOutput("gamlss_text_psplines"), plotOutput("gamlss_term_pb"), plotOutput("gamlss_fitted_pb_"),
-              p("GAMLSS with Cubic-Splines:"), verbatimTextOutput("gamlss_text_splines"), plotOutput("gamlss_term_cs"), plotOutput("gamlss_fitted_cs_"),
-              p("Wormplots for GAMLSS with the P-Splines and Cubic Splines:"), 
-              plotOutput("wormplots_splines", height="500px")),
-            
-            tabPanel("GAMLSS (Polynomials)", icon = icon("chart-line"), value = "nav_gamlss",
-                     
-              plotOutput("gamlss_models_poly", height="700px")), 
-            
-            tabPanel("GAMLSS (Polynomials)", icon = icon("calculator"), value = "nav_gamlss", 
-              
-              p("GAMLSS with Polynomial Degree 3:"), verbatimTextOutput("gamlss_text_poly"), plotOutput("gamlss_term_poly"), plotOutput("gamlss_fitted_poly_"),
-              p("GAMLSS with Polynomial Degree 4:"), verbatimTextOutput("gamlss_text_poly4"), plotOutput("gamlss_term_poly4"), plotOutput("gamlss_fitted_poly4_"),
-              p("Wormplots for GAMLSS with the Polynomial Degree 3 and 4:"), 
-              plotOutput("wormplots_poly", height="500px")),
-            
-            tabPanel("GAMLSS (Neural Network)", icon = icon("brain"), value = "nav_gamlss",
-                   
-              plotOutput("gamlss_net", height="700px")),
-            
-            tabPanel("GAMLSS (Neural Network)", icon = icon("calculator"), value = "nav_gamlss",
-                     
-              verbatimTextOutput("net_text"), p("Neural Network - Analysis:"), 
-              # Plot neural network with term.plot(nn_)
-              plotOutput("network_term"), plotOutput("network_fitted", height="500px"), plotOutput("nn_wormplots")),
-          
-            tabPanel("GAMLSS (Decision Tree)",  icon = icon("tree"), value = "nav_gamlss",
-                   
-              plotOutput("gamlss_tree", height="700px")),
-            
-            tabPanel("GAMLSS (Decision Tree)",  icon = icon("calculator"), value = "nav_gamlss",
-                     
-              verbatimTextOutput("tree_text"), p("Decision Tree - Analysis:"), 
-              plotOutput("rpart_tree"),  plotOutput("tree_term"), plotOutput("tree_fitted", height="500px"), 
-              plotOutput("tr_wormplots"))
-          ),
-          tags$script( src = 'tabs_enabled.js')),
-        )
-      ),
-      
-    ##################################### GAMLSS - Comparison #####################################
-      
-      tabPanel("Comparison", icon = icon("balance-scale"),
-               
-        p("Models can be compared visually or with the Akaike Information Criterion (AIC), 
-        Generalized Information Criterion (GAIC), Bayesian Information Criterion (BIC), 
-        or Pseudo R-Squared (R^2). The model with the smallest value for AIC, BIC and GAIC is the best model for the data.
-        The Pseudo R-Squared (R^2) should be as large as possible for a good model. These values are colored."), 
-               
-        DT::dataTableOutput("table_compare"),
-        #downloadButton("downloadData_comparison", "Comparison"),
-        plotOutput("metrics", height = "400px")),  
-      
-    ################################### GAMLSS - Prediction #######################################
+                  tabPanel("Dataset", icon = icon("table"),
+                    
+                    p(br(), strong("Shiny App for calculating age-dependent Reference Intervals!"), br(), br(),
+                    "This Shiny App was developed to create age-dependent Reference Intervals using 
+                    Generalized Additive Models for Location, Scale and Shape (GAMLSS).", br(),
+                    "For further information visit our", a("Wiki", href = "https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"),       
+                                  
+                    DT::dataTableOutput("datatable")),
+                  
+                  tabPanel("Barplots", icon = icon("chart-bar"),
+                           
+                    p(br(), strong("Shiny App for calculating age-dependent Reference Intervals!"), br(), br(),
+                    "This Shiny App was developed to create age-dependent Reference Intervals using 
+                    Generalized Additive Models for Location, Scale and Shape (GAMLSS).", br(),
+                    "For further information visit our", a("Wiki", href = "https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"), 
+                    
+                    plotOutput("barplot_sex", height = "375px"),
+                    plotOutput("barplot_value", height = "375px")),
+                  
+                  tabPanel("Statistics", icon = icon("calculator"),
+                    
+                    p(br(), strong("Shiny App for calculating age-dependent Reference Intervals!"), br(), br(),
+                    "This Shiny App was developed to create age-dependent Reference Intervals using 
+                    Generalized Additive Models for Location, Scale and Shape (GAMLSS).", br(),
+                    "For further information visit our", a("Wiki", href = "https://github.com/SandraKla/AdRI_GAMLSS/wiki"),"!"),        
+                           
+                    plotOutput("qqplot", height = "375px"),
+                    plotOutput("lognorm", height = "375px"))
+                )
+              )
+            ))),
     
-    tabPanel("Percentiles", icon = icon("table"),
-      sidebarLayout(    
-        ### Sidebar - GAMLSS ###
-        sidebarPanel(width = 3,
-                     
-          #numericInput("prediction_age", "Prediction of the Reference Intervals for age [Days]:", 0, min = 0, max = 12*365),
-          
-          selectInput("select_model", "Select Model:", choices = list("Splines" = c("P-Splines" = "pb_ri",
-                                                                                                  "Cubic Splines" = "cs_ri"),
-                                                                                    "LMS" = c(LMS = "lms_ri"),
-                                                                                    "Polynomial" = c("Polynomial (Degree 3)" = "poly_ri", 
-                                                                                                   "Polynomial (Degree 4)" = "poly4_ri"),
-                                                                                    "Machine Learning" = c("Neural Network" = "nn_ri", 
-                                                                                                           "Decision Tree" = "tr_ri")))
-          ),
-               
-        ### MainPanel - GAMLSS ###
-        mainPanel(width = 9,
-          tabsetPanel( 
-            tabPanel("Percentiles", icon = icon("chart-line"),
+    tabItem(tabName = "gamlsslms",
+            fillPage(fluidRow(
               
-              plotOutput("gamlss_prediction", height = "700px")),
-           
-            tabPanel("Table", icon = icon("table"), 
-                     
-              DT::dataTableOutput("gamlss_tables"), 
-              downloadButton("Download_ri", "Percentiles"))
-          )
-        )
-      )
-    )
-  )
-  )
+              ### Sidebar - GAMLSS ###
+              box(
+                title = tagList(shiny::icon("gear"), "Settings"),
+                width = 3,
+                solidHeader = TRUE,
+                status = "primary",
+                
+                actionButton("button_lms", "Start LMS", icon("calculator"), onclick = "$(tab).removeClass('disabled')"),
+                htmlOutput("buttons_lms"),
+                hr(),
+                selectInput(
+                  "distribtion_gamlss",
+                  "Distribution for GAMLSS:",
+                  choices = list(
+                    "Log-Normal Distribution" = "LOGNO",
+                    "Normal Distribution" = "NO",
+                    "Box-Cox" = c(
+                      #"Box-Cole Green Distribution" = "BCCG",
+                      "Box-Cole Green Distribution (orginal)" = "BCCGo",
+                      #"Box-Cole Green Exp. Distribution" = "BCPE",
+                      "Box-Cole Green Exp. Distribution (orginal)" = "BCPEo",
+                      #"Box-Cole Green T-Distribution" = "BCT",
+                      "Box-Cole Green T-Distribution (orginal)" = "BCTo"
+                    )
+                  )
+                ),
+                checkboxInput("checkbox", "Distribution proposed by the LMS", value = FALSE),
+                actionButton("button_gamlss", "Start GAMLSS", icon("calculator"), onclick = "$(tabs).removeClass('disabled')"),
+                htmlOutput("buttons_gamlss")
+              ),
+              
+              ### MainPanel - GAMLSS ###
+              column(width = 9,
+                tabsetPanel(
+                  tabPanel(
+                    "LMS", 
+                    icon = icon("chart-line"), 
+                    value = "nav_lms",
+                    
+                    fluidRow(
+                    box(title = tagList(shiny::icon("chart-line"), "Plot"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "primary",
+                        collapsed = TRUE,
+                        id = "box_lms1",
+                        
+                        plotOutput("lms", height = "475px")
+                    ),
+                    
+                    box(title = tagList(shiny::icon("calculator"), "Statistics"),
+                      width = 12,
+                      solidHeader = TRUE,
+                      collapsible = TRUE,
+                      status = "info",
+                      collapsed = TRUE,
+                      class = "custom-scrollbox",
+                      
+                      verbatimTextOutput("lms_text"),
+                      plotOutput("lms_plot"),
+                      plotOutput("lms_fitted"),
+                      plotOutput("lms_wormplots"))
+                  )),
+                  
+                  tabPanel(
+                    "GAMLSS (Splines)",
+                    icon = icon("chart-line"),
+                    value = "nav_gamlss",
+                    
+                    fluidRow(
+                    box(title = tagList(shiny::icon("chart-line"), "Plot"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "primary",
+                        
+                        plotOutput("gamlss_models_splines", height = "475px")
+                    ),
+                    
+                    box(title = tagList(shiny::icon("calculator"), "Statistics"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "info",
+                        collapsed = TRUE,
+                        class = "custom-scrollbox",
+                        
+                        p("GAMLSS with P-Splines:"),
+                        verbatimTextOutput("gamlss_text_psplines"),
+                        plotOutput("gamlss_term_pb"),
+                        plotOutput("gamlss_fitted_pb_"),
+                        p("GAMLSS with Cubic-Splines:"),
+                        verbatimTextOutput("gamlss_text_splines"),
+                        plotOutput("gamlss_term_cs"),
+                        plotOutput("gamlss_fitted_cs_"),
+                        p("Wormplots for GAMLSS with the P-Splines and Cubic Splines:"),
+                        plotOutput("wormplots_splines"))
+                  )),
+                  
+                  tabPanel(
+                    "GAMLSS (Polynomials)",
+                    icon = icon("chart-line"),
+                    value = "nav_gamlss",
+                    
+                    fluidRow(
+                    box(title = tagList(shiny::icon("chart-line"), "Plot"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "primary",
+                        
+                        plotOutput("gamlss_models_poly", height ="475px")
+                    ),
+                    
+                    box(title = tagList(shiny::icon("calculator"), "Statistics"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "info",
+                        collapsed = TRUE,
+                        class = "custom-scrollbox",
+                        
+                        p("GAMLSS with Polynomial Degree 3:"),
+                        verbatimTextOutput("gamlss_text_poly"),
+                        plotOutput("gamlss_term_poly"),
+                        plotOutput("gamlss_fitted_poly_"),
+                        p("GAMLSS with Polynomial Degree 4:"),
+                        verbatimTextOutput("gamlss_text_poly4"),
+                        plotOutput("gamlss_term_poly4"),
+                        plotOutput("gamlss_fitted_poly4_"),
+                        p("Wormplots for GAMLSS with the Polynomial Degree 3 and 4:"),
+                        plotOutput("wormplots_poly"))
+                  )),
+                 
+                  tabPanel(
+                    "GAMLSS (Neural Network)",
+                    icon = icon("brain"),
+                    value = "nav_gamlss",
+                    
+                    fluidRow(
+                    box(title = tagList(shiny::icon("chart-line"), "Plot"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "primary",
+                        
+                        plotOutput("gamlss_net", height = "475px")),
+                    
+                    box(title = tagList(shiny::icon("calculator"), "Statistics"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "info",
+                        collapsed = TRUE,
+                        class = "custom-scrollbox",
+                        
+                        verbatimTextOutput("net_text"),
+                        # Plot neural network with term.plot(nn_)
+                        plotOutput("network_term"),
+                        plotOutput("network_fitted"),
+                        plotOutput("nn_wormplots"))
+                    )),
+
+                  tabPanel(
+                    "GAMLSS (Decision Tree)",
+                    icon = icon("tree"),
+                    value = "nav_gamlss",
+                    
+                    fluidRow(
+                    box(title = tagList(shiny::icon("chart-line"), "Plot"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "primary",
+                        
+                        plotOutput("gamlss_tree", height = "475px")
+                    ),
+                    
+                    box(title = tagList(shiny::icon("calculator"), "Statistics"),
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        status = "info",
+                        collapsed = TRUE,
+                        class = "custom-scrollbox",
+                    
+                        verbatimTextOutput("tree_text"),
+                        plotOutput("rpart_tree"),
+                        plotOutput("tree_term"),
+                        plotOutput("tree_fitted"),
+                        plotOutput("tr_wormplots"))
+                    )
+                  )
+                )
+              ), tags$script(src = 'tabs_enabled.js')))), 
+    
+    ### GAMLSS - Comparison ###
+    tabItem(tabName = "comparison",
+            fillPage(fluidPage(
+            
+              p("Models can be compared visually or with the Akaike Information Criterion (AIC),
+              Generalized Information Criterion (GAIC), Bayesian Information Criterion (BIC),
+              or Pseudo R-Squared (R^2). The model with the smallest value for AIC, BIC and GAIC is the best model for the data.
+              The Pseudo R-Squared (R^2) should be as large as possible for a good model. These values are colored."),
+                
+              DT::dataTableOutput("table_compare"),
+              plotOutput("metrics", height = "475px")))),
+    
+    ### GAMLSS - Prediction ###
+    tabItem(tabName = "percentiles",
+            
+            fluidRow(column(
+              width = 3,
+              
+              fluidRow(
+              box(
+                title = tagList(shiny::icon("gear"), "Settings"),
+                width = 12,
+                solidHeader = TRUE,
+                status = "primary",
+                
+                selectInput(
+                  "select_model",
+                  "Select model:",
+                  choices = list(
+                    "Splines" = c("P-Splines" = "pb_ri",
+                                  "Cubic Splines" = "cs_ri"),
+                    "LMS" = c(LMS = "lms_ri"),
+                    "Polynomial" = c(
+                      "Polynomial (Degree 3)" = "poly_ri",
+                      "Polynomial (Degree 4)" = "poly4_ri"
+                    ),
+                    "Machine Learning" = c("Neural Network" = "nn_ri",
+                                           "Decision Tree" = "tr_ri")
+                  )
+                )
+              ))),
+              
+             column(width = 9,
+                       
+                box(title = tagList(shiny::icon("chart-line"), "Percentiles"),
+                    width = 12,
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    status = "primary",
+                    
+                    plotOutput("gamlss_prediction", height = "475px")),
+                
+                box(title = tagList(shiny::icon("table"), "Table"),
+                    width = 12,
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    status = "info",
+                    collapsed = TRUE,
+                    class = "custom-scrollbox",
+    
+                    DT::dataTableOutput("gamlss_tables"))
+              )
+    ))
+  ))
 )
 
 ####################################### SERVER ####################################################
@@ -279,6 +474,10 @@ server <- function(input, output, session) {
   
   observeEvent(input$reset, {
     values$upload_state <- 'reset'
+  })
+  
+  observeEvent(input$button_lms, {
+    shinyjs::toggle("box_lms1")
   })
   
   dataset_input <- reactive({

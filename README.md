@@ -30,7 +30,7 @@ runGitHub("AdRI_GAMLSS", "SandraKla")
 
 **Method 2:**
 Download the Zip-File from this Shiny App. Unzip the file and set your working direction to the path of the folder. 
-The package [shiny](https://cran.r-project.org/web/packages/shiny/index.html) must be installed before using the Shiny App:
+The package [shiny](https://cran.r-project.org/web/packages/shiny/index.html) and [shinydashboard](https://cran.r-project.org/web/packages/shinydashboard/index.html) must be installed before using the Shiny App:
 
 ```bash
 # Test if shiny is installed:
