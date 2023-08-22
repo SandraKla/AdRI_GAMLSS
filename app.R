@@ -73,16 +73,7 @@ ui <- dashboardPage(
                    )),
   dashboardBody(
     
-    tags$style(
-    HTML("
-          .content-wrapper {
-            overflow-y: scroll !important;
-          }
-          .custom-scrollbox {
-            max-height: 400px; /* Passe die maximale Höhe an */
-            overflow-y: scroll;
-          }
-        ")),
+    tags$style("html, body {overflow: visible !important;"),
     
     tabItems(
     tabItem(tabName = "analysis",
@@ -234,9 +225,7 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         status = "primary",
-                        collapsed = TRUE,
-                        id = "box_lms1",
-                        
+
                         plotOutput("lms", height = "475px")
                     ),
                     
@@ -245,8 +234,6 @@ ui <- dashboardPage(
                       solidHeader = TRUE,
                       collapsible = TRUE,
                       status = "info",
-                      collapsed = TRUE,
-                      class = "custom-scrollbox",
                       
                       verbatimTextOutput("lms_text"),
                       plotOutput("lms_plot"),
@@ -274,8 +261,6 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         status = "info",
-                        collapsed = TRUE,
-                        class = "custom-scrollbox",
                         
                         p("GAMLSS with P-Splines:"),
                         verbatimTextOutput("gamlss_text_psplines"),
@@ -309,8 +294,6 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         status = "info",
-                        collapsed = TRUE,
-                        class = "custom-scrollbox",
                         
                         p("GAMLSS with Polynomial Degree 3:"),
                         verbatimTextOutput("gamlss_text_poly"),
@@ -343,8 +326,6 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         status = "info",
-                        collapsed = TRUE,
-                        class = "custom-scrollbox",
                         
                         verbatimTextOutput("net_text"),
                         # Plot neural network with term.plot(nn_)
@@ -373,8 +354,6 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         status = "info",
-                        collapsed = TRUE,
-                        class = "custom-scrollbox",
                     
                         verbatimTextOutput("tree_text"),
                         plotOutput("rpart_tree"),
@@ -387,16 +366,31 @@ ui <- dashboardPage(
               ), tags$script(src = 'tabs_enabled.js')))), 
     
     ### GAMLSS - Comparison ###
+    ### GAMLSS - Comparison ###
     tabItem(tabName = "comparison",
-            fillPage(fluidPage(
-            
-              p("Models can be compared visually or with the Akaike Information Criterion (AIC),
-              Generalized Information Criterion (GAIC), Bayesian Information Criterion (BIC),
-              or Pseudo R-Squared (R^2). The model with the smallest value for AIC, BIC and GAIC is the best model for the data.
-              The Pseudo R-Squared (R^2) should be as large as possible for a good model. These values are colored."),
+            fluidRow(
+              
+              box(
+                title = tagList(shiny::icon("gear"), "Settings"),
+                width = 3,
+                solidHeader = TRUE,
+                status = "primary",
                 
-              DT::dataTableOutput("table_compare"),
-              plotOutput("metrics", height = "475px")))),
+                p("Models can be compared visually or with the Akaike Information Criterion (AIC),
+                  Generalized Information Criterion (GAIC), Bayesian Information Criterion (BIC),
+                  or Pseudo R-Squared (R^2). The model with the smallest value for AIC, BIC and GAIC is the best model for the data.
+                  The Pseudo R-Squared (R^2) should be as large as possible for a good model. These values are colored.")
+              ),
+
+              box(
+                title = tagList(shiny::icon("balance-scale"), "Comparison"),
+                width = 9,
+                solidHeader = TRUE,
+                status = "primary",
+                
+                DT::dataTableOutput("table_compare"),
+                plotOutput("metrics", height = "475px")
+              ))),
     
     ### GAMLSS - Prediction ###
     tabItem(tabName = "percentiles",
@@ -443,8 +437,6 @@ ui <- dashboardPage(
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     status = "info",
-                    collapsed = TRUE,
-                    class = "custom-scrollbox",
     
                     DT::dataTableOutput("gamlss_tables"))
               )
@@ -474,10 +466,6 @@ server <- function(input, output, session) {
   
   observeEvent(input$reset, {
     values$upload_state <- 'reset'
-  })
-  
-  observeEvent(input$button_lms, {
-    shinyjs::toggle("box_lms1")
   })
   
   dataset_input <- reactive({
