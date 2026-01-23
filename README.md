@@ -11,8 +11,6 @@
 
 This Shiny App was developed to create **A**ge-**d**ependent **R**eference **I**ntervals (**AdRI**) using [Generalized Additive Models for Location, Scale and Shape (GAMLSS)](https://github.com/SandraKla/AdRI_GAMLSS/wiki).
 
-*** **Warning!** This Shiny App has not been enough validated for the basis of a medical diagnosis! There is no warranty for the app and/or the reference intervals! ***
-
 <img src="www/shiny_overview.png" align="center"/>
 
 ## Installation 
@@ -54,3 +52,13 @@ You are welcome to:
 - Write an Email with any questions and problems to: s.klawitter@ostfalia.de
 
 Link to the publication: [A visualization tool for continuous reference intervals based on GAMLSS](https://www.degruyter.com/document/doi/10.1515/labmed-2023-0033/html)
+
+## Disclaimer:
+
+Only anonymized data may be uploaded to this application.
+This application is provided “as is” and “as available”, without any warranties of any kind, express or implied.
+The results are provided for informational and research purposes only and must not be used for diagnosis, treatment, prevention, or clinical decision-making.
+No warranty is given regarding the accuracy, completeness, reliability, or timeliness of the results.
+This application is not a medical device or medical product and does not replace professional medical advice.
+To the fullest extent permitted by law, the author disclaim all liability for any direct, indirect, incidental, consequential, or special damages arising from the use of this application or its results.
+Use of this application is entirely at your own risk.
