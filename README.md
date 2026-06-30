@@ -1,5 +1,14 @@
 # Shiny App: AdRI_GAMLSS
 
+⚠️ **Project Status: Deprecated**
+ 
+This project is no longer actively maintained and will not be further developed.  
+The functionality has been integrated into the successor project AdRI 👉 https://github.com/SandraKla/AdRI
+ 
+Please refer to that repository for the latest updates and continued development.
+
+---
+
 ![](https://img.shields.io/github/license/SandraKla/AdRI_GAMLSS.svg)
 ![](https://img.shields.io/github/last-commit/SandraKla/AdRI_GAMLSS.svg)
 ![](https://img.shields.io/github/languages/count/SandraKla/AdRI_GAMLSS.svg)
